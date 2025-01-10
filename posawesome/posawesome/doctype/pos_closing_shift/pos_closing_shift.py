@@ -89,31 +89,9 @@ class POSClosingShift(Document):
 
 @frappe.whitelist()
 def get_cashiers(doctype, txt, searchfield, start, page_len, filters):
-    doctype = "User"
-    conditions = []
-    cashiers_list = frappe.get_all("POS Profile User", filters=filters, fields=["user as name"])
-    fields = ["user"]
+    cashiers_list = frappe.get_all("POS Profile User", filters=filters, fields=["user"])
+    return [c["user"] for c in cashiers_list]
 
-    return frappe.db.sql(
-        """select {fields} from `tabPOS Profile User`
-        where
-            docstatus < 2
-            and ({key} like %(txt)s)
-            and parent = %(pos_profile)s
-        order by
-            (case when locate(%(_txt)s, user) > 0 then locate(%(_txt)s, user) else 99999 end),
-            idx desc,
-            user
-        limit %(page_len)s offset %(start)s""".format(
-            **{
-                "fields": ", ".join(fields),
-                "key": "user",
-                "fcond": "",
-                "mcond": "",
-            }
-        ),
-        {"txt": "%%%s%%" % txt, "_txt": txt.replace("%", ""), "start": start, "page_len": page_len, "pos_profile": filters.get("parent")},
-    )
 
 @frappe.whitelist()
 def get_pos_invoices(pos_opening_shift):
@@ -213,7 +191,7 @@ def make_closing_shift_from_opening(opening_shift):
                 existing_tax[0].amount += flt(t.tax_amount)
             else:
                 taxes.append(
-                    __dict(
+                    frappe._dict(
                         {
                             "account_head": t.account_head,
                             "rate": t.rate,
@@ -241,7 +219,7 @@ def make_closing_shift_from_opening(opening_shift):
                 existing_pay[0].expected_amount += flt(amount)
             else:
                 payments.append(
-                    __dict(
+                    frappe._dict(
                         {
                             "mode_of_payment": p.mode_of_payment,
                             "opening_amount": 0,
@@ -254,7 +232,7 @@ def make_closing_shift_from_opening(opening_shift):
 
     for py in pos_payments:
         pos_payments_table.append(
-            __dict(
+            frappe._dict(
                 {
                     "payment_entry": py.name,
                     "mode_of_payment": py.mode_of_payment,
@@ -271,7 +249,7 @@ def make_closing_shift_from_opening(opening_shift):
             existing_pay[0].expected_amount += flt(py.paid_amount)
         else:
             payments.append(
-                __dict(
+                frappe._dict(
                     {
                         "mode_of_payment": py.mode_of_payment,
                         "opening_amount": 0,

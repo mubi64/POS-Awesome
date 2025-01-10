@@ -1,6 +1,9 @@
 <template>
   <v-row justify="center">
     <v-dialog v-model="draftsDialog" max-width="900px">
+      <!-- <template v-slot:activator="{ on, attrs }">
+        <v-btn color="primary" dark v-bind="attrs" v-on="on">Open Dialog</v-btn>
+      </template>-->
       <v-card>
         <v-card-title>
           <span class="headline primary--text">{{
@@ -11,23 +14,25 @@
           <v-container>
             <v-row no-gutters>
               <v-col cols="12" class="pa-1">
-                <v-data-table
-                  :headers="headers"
-                  :items="dialog_data"
-                  item-value="name"
-                  class="elevation-1"
-                  show-select
-                  v-model="selected"
-                  single-select
-                >
-                  <template v-slot:[`item.posting_time`]="{ item }">
-                    {{ item.posting_time.split('.')[0] }}
-                  </template>
-                  <template v-slot:[`item.grand_total`]="{ item }">
-                    {{ currencySymbol(item.currency) }}
-                    {{ formtCurrency(item.grand_total) }}
-                  </template>
-                </v-data-table>
+                <template>
+                  <v-data-table
+                    :headers="headers"
+                    :items="dialog_data"
+                    item-key="name"
+                    class="elevation-1"
+                    :single-select="singleSelect"
+                    show-select
+                    v-model="selected"
+                  >
+                    <template v-slot:item.posting_time="{ item }">
+                      {{ item.posting_time.split('.')[0] }}
+                    </template>
+                    <template v-slot:item.grand_total="{ item }">
+                      {{ currencySymbol(item.currency) }}
+                      {{ formtCurrency(item.grand_total) }}
+                    </template>
+                  </v-data-table>
+                </template>
               </v-col>
             </v-row>
           </v-container>
@@ -55,32 +60,32 @@ export default {
     dialog_data: {},
     headers: [
       {
-        title: __('Customer'),
-        key: 'customer_name',
+        text: __('Customer'),
+        value: 'customer_name',
         align: 'start',
         sortable: true,
       },
       {
-        title: __('Date'),
+        text: __('Date'),
         align: 'start',
         sortable: true,
-        key: 'posting_date',
+        value: 'posting_date',
       },
       {
-        title: __('Time'),
+        text: __('Time'),
         align: 'start',
         sortable: true,
-        key: 'posting_time',
+        value: 'posting_time',
       },
       {
-        title: __('Invoice'),
-        key: 'name',
+        text: __('Invoice'),
+        value: 'name',
         align: 'start',
         sortable: true,
       },
       {
-        title: __('Amount'),
-        key: 'grand_total',
+        text: __('Amount'),
+        value: 'grand_total',
         align: 'end',
         sortable: false,
       },
@@ -93,25 +98,14 @@ export default {
     },
 
     submit_dialog() {
-      var me = this;
-      if (this.selected.length == 1) {
-        $.each(this.dialog_data || [], function(i,v){
-          if(v.name == me.selected[0]){
-            evntBus.emit('load_invoice', v);
-            me.draftsDialog = false;
-          }
-        });
-      }
-      else{
-        evntBus.emit("show_mesage", {
-          text: `Select Only 1 Row`,
-          color: "error",
-        });
+      if (this.selected.length > 0) {
+        evntBus.$emit('load_invoice', this.selected[0]);
+        this.draftsDialog = false;
       }
     },
   },
   created: function () {
-    evntBus.on('open_drafts', (data) => {
+    evntBus.$on('open_drafts', (data) => {
       this.draftsDialog = true;
       this.dialog_data = data;
     });

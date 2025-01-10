@@ -21,7 +21,7 @@
                 <v-text-field
                   dense
                   color="primary"
-                  :label="__('Customer Name') + ' *'"
+                  :label="frappe._('Customer Name') + ' *'"
                   background-color="white"
                   hide-details
                   v-model="customer_name"
@@ -31,7 +31,7 @@
                 <v-text-field
                   dense
                   color="primary"
-                  :label="__('Tax ID')"
+                  :label="frappe._('Tax ID')"
                   background-color="white"
                   hide-details
                   v-model="tax_id"
@@ -41,7 +41,7 @@
                 <v-text-field
                   dense
                   color="primary"
-                  :label="__('Mobile No')"
+                  :label="frappe._('Mobile No')"
                   background-color="white"
                   hide-details
                   v-model="mobile_no"
@@ -51,7 +51,7 @@
                 <v-text-field
                   dense
                   color="primary"
-                  :label="__('Email Id')"
+                  :label="frappe._('Email Id')"
                   background-color="white"
                   hide-details
                   v-model="email_id"
@@ -69,7 +69,7 @@
                 <v-text-field
                   dense
                   color="primary"
-                  :label="__('Referral Code')"
+                  :label="frappe._('Referral Code')"
                   background-color="white"
                   hide-details
                   v-model="referral_code"
@@ -86,7 +86,7 @@
                   <template v-slot:activator="{ on, attrs }">
                     <v-text-field
                       v-model="birthday"
-                      :label="__('Birthday')"
+                      :label="frappe._('Birthday')"
                       readonly
                       dense
                       clearable
@@ -113,7 +113,7 @@
                   dense
                   auto-select-first
                   color="primary"
-                  :label="__('Customer Group') + ' *'"
+                  :label="frappe._('Customer Group') + ' *'"
                   v-model="group"
                   :items="groups"
                   background-color="white"
@@ -129,7 +129,7 @@
                   dense
                   auto-select-first
                   color="primary"
-                  :label="__('Territory') + ' *'"
+                  :label="frappe._('Territory') + ' *'"
                   v-model="territory"
                   :items="territorys"
                   background-color="white"
@@ -142,7 +142,7 @@
               <v-col cols="6" v-if="loyalty_program">
                 <v-text-field
                   v-model="loyalty_program"
-                  :label="__('Loyalty Program')"
+                  :label="frappe._('Loyalty Program')"
                   dense
                   readonly
                   hide-details
@@ -151,7 +151,7 @@
               <v-col cols="6" v-if="loyalty_points">
                 <v-text-field
                   v-model="loyalty_points"
-                  :label="__('Loyalty Points')"
+                  :label="frappe._('Loyalty Points')"
                   dense
                   readonly
                   hide-details
@@ -273,21 +273,21 @@ export default {
     submit_dialog() {
       // validate if all required fields are filled
       if (!this.customer_name) {
-        evntBus.emit('show_mesage', {
+        evntBus.$emit('show_mesage', {
           text: __('Customer name is required.'),
           color: 'error',
         });
         return;
       }
       if (!this.group) {
-        evntBus.emit('show_mesage', {
+        evntBus.$emit('show_mesage', {
           text: __('Customer group is required.'),
           color: 'error',
         });
         return;
       }
       if (!this.territory) {
-        evntBus.emit('show_mesage', {
+        evntBus.$emit('show_mesage', {
           text: __('Customer territory is required.'),
           color: 'error',
         });
@@ -320,19 +320,19 @@ export default {
               if (vm.customer_id) {
                 text = __('Customer updated successfully.');
               }
-              evntBus.emit('show_mesage', {
+              evntBus.$emit('show_mesage', {
                 text: text,
                 color: 'success',
               });
               args.name = r.message.name;
               frappe.utils.play_sound('submit');
-              evntBus.emit('add_customer_to_list', args);
-              evntBus.emit('set_customer', r.message.name);
-              evntBus.emit('fetch_customer_details');
+              evntBus.$emit('add_customer_to_list', args);
+              evntBus.$emit('set_customer', r.message.name);
+              evntBus.$emit('fetch_customer_details');
               this.close_dialog();
             } else {
               frappe.utils.play_sound('error');
-              evntBus.emit('show_mesage', {
+              evntBus.$emit('show_mesage', {
                 text: __('Customer creation failed.'),
                 color: 'error',
               });
@@ -344,7 +344,7 @@ export default {
     },
   },
   created: function () {
-    evntBus.on('open_update_customer', (data) => {
+    evntBus.$on('open_update_customer', (data) => {
       this.customerDialog = true;
       if (data) {
         this.customer_name = data.customer_name;
@@ -361,10 +361,10 @@ export default {
         this.gender = data.gender;
       }
     });
-    evntBus.on('register_pos_profile', (data) => {
+    evntBus.$on('register_pos_profile', (data) => {
       this.pos_profile = data.pos_profile;
     });
-    evntBus.on('payments_register_pos_profile', (data) => {
+    evntBus.$on('payments_register_pos_profile', (data) => {
       this.pos_profile = data.pos_profile;
     });
     this.getCustomerGroups();

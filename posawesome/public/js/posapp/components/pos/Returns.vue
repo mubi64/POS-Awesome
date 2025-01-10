@@ -3,13 +3,15 @@
     <v-dialog v-model="invoicesDialog" max-width="800px" min-width="800px">
       <v-card>
         <v-card-title>
-          <span class="headline primary--text">{{ __('Select Return Invoice') }}</span>
+          <span class="headline primary--text">{{
+            __('Select Return Invoice')
+          }}</span>
         </v-card-title>
         <v-container>
           <v-row class="mb-4">
             <v-text-field
               color="primary"
-              :label="__('Invoice ID')"
+              :label="frappe._('Invoice ID')"
               background-color="white"
               hide-details
               v-model="invoice_name"
@@ -17,33 +19,46 @@
               clearable
               class="mx-4"
             ></v-text-field>
-            <v-btn text class="ml-2" color="primary" dark @click="search_invoices">
-              {{ __('Search') }}
-            </v-btn>
+            <v-btn
+              text
+              class="ml-2"
+              color="primary"
+              dark
+              @click="search_invoices"
+              >{{ __('Search') }}</v-btn
+            >
           </v-row>
           <v-row>
             <v-col cols="12" class="pa-1" v-if="dialog_data">
-              <v-data-table
-                :headers="headers"
-                :items="dialog_data"
-                item-value="name"
-                class="elevation-1"
-                show-select
-                v-model="selected"
-              >
-                <template v-slot:[`item.grand_total`]="{ item }">
-                  {{ currencySymbol(item.currency) }} {{ formtCurrency(item.grand_total) }}
-                </template>
-              </v-data-table>
+              <template>
+                <v-data-table
+                  :headers="headers"
+                  :items="dialog_data"
+                  item-key="name"
+                  class="elevation-1"
+                  :single-select="singleSelect"
+                  show-select
+                  v-model="selected"
+                >
+                  <template v-slot:item.grand_total="{ item }">
+                    {{ currencySymbol(item.currency) }}
+                    {{ formtCurrency(item.grand_total) }}</template
+                  >
+                </v-data-table>
+              </template>
             </v-col>
           </v-row>
         </v-container>
         <v-card-actions class="mt-4">
           <v-spacer></v-spacer>
           <v-btn color="error mx-2" dark @click="close_dialog">Close</v-btn>
-          <v-btn color="success" dark @click="submit_dialog">
-            {{ __('Select') }}
-          </v-btn>
+          <v-btn
+            v-if="selected.length"
+            color="success"
+            dark
+            @click="submit_dialog"
+            >{{ __('Select') }}</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -64,26 +79,26 @@ export default {
     invoice_name: '',
     headers: [
       {
-        title: __('Customer'),
-        key: 'customer',
+        text: __('Customer'),
+        value: 'customer',
         align: 'start',
         sortable: true,
       },
       {
-        title: __('Date'),
+        text: __('Date'),
         align: 'start',
         sortable: true,
-        key: 'posting_date',
+        value: 'posting_date',
       },
       {
-        title: __('Invoice'),
-        key: 'name',
+        text: __('Invoice'),
+        value: 'name',
         align: 'start',
         sortable: true,
       },
       {
-        title: __('Amount'),
-        key: 'grand_total',
+        text: __('Amount'),
+        value: 'grand_total',
         align: 'end',
         sortable: false,
       },
@@ -116,40 +131,29 @@ export default {
       });
     },
     submit_dialog() {
-      var me = this;
-      if (this.selected.length == 1) {
-         $.each(this.dialog_data || [], function(i,v){
-          if(v.name == me.selected[0]){
-            const return_doc = v;
-            const invoice_doc = {};
-            const items = [];
-            return_doc.items.forEach((item) => {
-              const new_item = { ...item };
-              new_item.qty = item.qty * -1;
-              new_item.stock_qty = item.stock_qty * -1;
-              new_item.amount = item.amount * -1;
-              items.push(new_item);
-            });
-            invoice_doc.items = items;
-            invoice_doc.is_return = 1;
-            invoice_doc.return_against = return_doc.name;
-            invoice_doc.customer = return_doc.customer;
-            const data = { invoice_doc, return_doc };
-            evntBus.emit('load_return_invoice', data);
-            me.invoicesDialog = false;
-          }
+      if (this.selected.length > 0) {
+        const return_doc = this.selected[0];
+        const invoice_doc = {};
+        const items = [];
+        return_doc.items.forEach((item) => {
+          const new_item = { ...item };
+          new_item.qty = item.qty * -1;
+          new_item.stock_qty = item.stock_qty * -1;
+          new_item.amount = item.amount * -1;
+          items.push(new_item);
         });
-      }
-      else{
-        evntBus.emit("show_mesage", {
-          text: `Select Only 1 Row`,
-          color: "error",
-        });
+        invoice_doc.items = items;
+        invoice_doc.is_return = 1;
+        invoice_doc.return_against = return_doc.name;
+        invoice_doc.customer = return_doc.customer;
+        const data = { invoice_doc, return_doc };
+        evntBus.$emit('load_return_invoice', data);
+        this.invoicesDialog = false;
       }
     },
   },
   created: function () {
-    evntBus.on('open_returns', (data) => {
+    evntBus.$on('open_returns', (data) => {
       this.invoicesDialog = true;
       this.company = data;
       this.invoice_name = '';
