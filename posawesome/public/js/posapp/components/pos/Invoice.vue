@@ -497,7 +497,7 @@
                       :label="__('Batch No. Available QTY')"
                       background-color="white"
                       hide-details
-                      :value="formtFloat(item.actual_batch_qty)"
+                      :model-value="formtFloat(item.actual_batch_qty)"
                       disabled
                     ></v-text-field>
                   </v-col>
@@ -516,10 +516,7 @@
                       disabled
                     ></v-text-field>
                   </v-col>
-                  <v-col
-                    cols="8"
-                    v-if="item.has_batch_no == 1 || item.batch_no"
-                  >
+                  <v-col cols="8" v-if="item.has_batch_no == 1 || item.batch_no">
                     <v-autocomplete
                       v-model="item.batch_no"
                       :items="item.batch_no_data"
@@ -528,21 +525,15 @@
                       dense
                       color="primary"
                       :label="__('Batch No')"
-                      @change="set_batch_qty(item, $event.target.value)"
+                      @update:model-value="set_batch_qty(item, $event)"
                     >
                       <template v-slot:item="{ props, item }">
-                          <v-list-item
-                            v-bind="props"
-                          >
-                            <v-list-item-title
-                              v-html="item.batch_no"
-                            ></v-list-item-title>
-                            <v-list-item-subtitle
-                              v-html="
-                                `Available QTY  '${item.batch_qty}' - Expiry Date ${item.expiry_date}`
-                              "
-                            ></v-list-item-subtitle>
-                          </v-list-item>
+                        <v-list-item v-bind="props">
+                          <v-list-item-title v-html="item.batch_no"></v-list-item-title>
+                          <v-list-item-subtitle
+                            v-html="`Available QTY '${item.raw.batch_qty}' - Expiry Date ${item.raw.expiry_date}`"
+                          ></v-list-item-subtitle>
+                        </v-list-item>
                       </template>
                     </v-autocomplete>
                   </v-col>
