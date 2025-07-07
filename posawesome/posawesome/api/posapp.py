@@ -15,7 +15,6 @@ from erpnext.accounts.party import get_party_bank_account
 from erpnext.stock.doctype.batch.batch import (
     get_batch_no,
     get_batch_qty,
-    set_batch_nos,
 )
 from erpnext.accounts.doctype.payment_request.payment_request import (
     get_dummy_message,
@@ -32,6 +31,23 @@ from posawesome.posawesome.doctype.delivery_charges.delivery_charges import (
 )
 from frappe.utils.caching import redis_cache
 
+
+def set_batch_nos(doc, warehouse_field, throw=False, child_table="items"):
+	"""Automatically select `batch_no` for outgoing items in item table"""
+	for d in doc.get(child_table):
+		qty = d.get("stock_qty") or d.get("transfer_qty") or d.get("qty") or 0
+		warehouse = d.get(warehouse_field, None)
+		if warehouse and qty > 0 and frappe.db.get_value("Item", d.item_code, "has_batch_no"):
+			if not d.batch_no:
+				d.batch_no = get_batch_no(d.item_code, warehouse, qty, throw, d.serial_no)
+			else:
+				batch_qty = get_batch_qty(batch_no=d.batch_no, warehouse=warehouse)
+				if flt(batch_qty, d.precision("qty")) < flt(qty, d.precision("qty")):
+					frappe.throw(
+						_(
+							"Row #{0}: The batch {1} has only {2} qty. Please select another batch which has {3} qty available or split the row into multiple rows, to deliver/issue from multiple batches"
+						).format(d.idx, d.batch_no, batch_qty, qty)
+					)
 
 @frappe.whitelist()
 def get_opening_dialog_data():
